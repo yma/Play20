@@ -533,7 +533,7 @@ object Enumeratee {
         case in @ (Input.El(_) | Input.Empty) =>
           new CheckDone[From, To] { def continue[A](k: K[To, A]) = Cont(step(k)) } &> k(f(in))
 
-        case Input.EOF => Done(k(Input.EOF), Input.EOF)
+        case Input.EOF => Done(Cont(k), Input.EOF)
       }
 
       def continue[A](k: K[To, A]) = Cont(step(k))

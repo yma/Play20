@@ -45,6 +45,11 @@ object Invoker {
     }
   }
 
+  lazy val promiseDispatcher = {
+    system.dispatchers.lookup("akka.actor.promises-dispatcher")
+
+  }
+
   lazy val promiseInvoker = {
     system.actorOf(Props[play.api.libs.concurrent.STMPromise.PromiseInvoker].withDispatcher("akka.actor.promises-dispatcher").withRouter(RoundRobinRouter(100)), name = "promises")
   }
