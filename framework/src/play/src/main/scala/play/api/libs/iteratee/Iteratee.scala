@@ -550,8 +550,9 @@ object Enumeratee {
   def take[E](count: Int): Enumeratee[E, E] = new CheckDone[E, E] {
 
     def step[A](remaining: Int)(k: K[E, A]): K[E, Iteratee[E, A]] = {
+      case in @ Input.El(_) if remaining == 1 => Done(k(in), Input.Empty)
 
-      case in @ Input.El(_) if remaining > 0 =>
+      case in @ Input.El(_) if remaining > 1 =>
         new CheckDone[E, E] { def continue[A](k: K[E, A]) = Cont(step(remaining - 1)(k)) } &> k(in)
 
       case in @ Input.Empty if remaining > 0 =>
