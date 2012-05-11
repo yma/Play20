@@ -884,6 +884,39 @@ object Enumerator {
 
   import scalax.io.JavaConverters._
 
+  def generateM[E](e: => Promise[Option[E]]): Enumerator[E] = checkContinue0( new TreatCont0[E] {
+
+    def apply[A](loop: Iteratee[E,A] => Promise[Iteratee[E,A]], k: Input[E] => Iteratee[E,A]) = e.flatMap {
+      case Some(e) => loop(k(Input.El(e)))
+      case None => Promise.pure(Cont(k))
+    }
+  })
+
+  trait TreatCont0[E]{
+
+    def apply[A](loop: Iteratee[E,A] => Promise[Iteratee[E,A]], k: Input[E] => Iteratee[E,A]):Promise[Iteratee[E,A]]
+
+  }
+
+  def checkContinue0[E](inner:TreatCont0[E]) = new Enumerator[E] {
+
+    def apply[A](it: Iteratee[E, A]): Promise[Iteratee[E, A]] = {
+
+      def step(it: Iteratee[E, A]): Promise[Iteratee[E,A]] = {
+
+        it.fold(
+          (a, e) => Promise.pure(Done(a,e)),
+          k => {
+            inner[A](step,k)
+          },
+          (msg, e) => Promise.pure(Error(msg,e))
+        )
+      }
+      step(it)
+    }
+
+  }
+
   def fromCallback1[E](retriever: Boolean => Promise[Option[E]],
     onComplete: () => Unit = () => (),
     onError: (String, Input[E]) => Unit = (_: String, _: Input[E]) => ()) = new Enumerator[E] {
